@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#04060d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="R&C Manager">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>Restaurant & Cafe Manager</title>
+
+<link rel="manifest" href='data:application/manifest+json,{"name":"Restaurant %26 Cafe Manager","short_name":"R%26C Manager","start_url":".","display":"standalone","background_color":"%2304060d","theme_color":"%2304060d","orientation":"portrait","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27114%27 fill=%27%2304060d%27/%3E%3Crect x=%27112%27 y=%27112%27 width=%27288%27 height=%27288%27 rx=%2764%27 fill=%27%2335e0a1%27/%3E%3Cpath d=%27M200 280h112M256 224v112%27 stroke=%27%2303140d%27 stroke-width=%2736%27 stroke-linecap=%27round%27/%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}'>
+
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%2304060d'/%3E%3Crect x='40' y='40' width='100' height='100' rx='22' fill='%2335e0a1'/%3E%3Cpath d='M70 95h40M90 75v40' stroke='%2303140d' stroke-width='10' stroke-linecap='round'/%3E%3C/svg%3E">
+
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #04060d; --panel: #0b1120; --panel-2: #111a2e; --line: #1b2742;
+  --fg: #eef2fb; --muted: #8a96b2;
+  --accent: #35e0a1; --accent-ink: #03140d; --accent-soft: rgba(53,224,161,.13);
+  --month: #35e0a1; --year: #6f9cff; --once: #ffb454;
+  --month-soft: rgba(53,224,161,.13); --year-soft: rgba(111,156,255,.14); --once-soft: rgba(255,180,84,.14);
+  --danger: #ff7b72; --danger-soft: rgba(255,123,114,.14);
+  --owner: #c084fc; --owner-soft: rgba(192,132,252,.14);
+  --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body {
+  margin: 0; min-height: 100%; background: var(--bg); color: var(--fg);
+  font-family: var(--font); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, var(--safe-left));
+  padding-right: max(16px, var(--safe-right));
+  padding-bottom: calc(48px + var(--safe-bottom));
+  -webkit-font-smoothing: antialiased; overscroll-behavior-y: contain;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: var(--safe-top);
+  z-index: 30; background: var(--bg); pointer-events: none;
+}
+button, input, textarea { font: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
+button { cursor: pointer; border: 0; background: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Top bar */
+.top {
+  position: sticky; top: 0; z-index: 20; background: var(--bg);
+  padding-top: calc(12px + var(--safe-top)); padding-bottom: 12px;
+}
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand {
+  font-weight: 700; letter-spacing: .08em; font-size: 13px; text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+}
+.brand i { flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--accent); }
+
+/* Main tabs */
+.main-tabs {
+  display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 4px; margin-bottom: 16px;
+}
+.main-tab {
+  flex: 1; text-align: center; padding: 12px 8px; border-radius: 10px;
+  font-weight: 700; font-size: 14px; color: var(--muted); min-height: 44px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .15s, color .15s;
+}
+.main-tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.main-tab .count {
+  font-size: 12px; opacity: .7; font-weight: 600;
+}
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 999px; padding: 12px 20px; font-weight: 700; font-size: 14px;
+  background: var(--accent); color: var(--accent-ink); white-space: nowrap; min-height: 44px;
+  transition: filter .15s, transform .1s;
+}
+.btn:active { transform: scale(0.97); }
+.btn.ghost { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1.5px var(--line); }
+.btn.small { padding: 10px 16px; font-size: 13px; min-height: 40px; }
+.btn.danger { background: var(--danger); color: #1a0503; }
+.btn.owner { background: var(--owner); color: #1a0a2e; }
+
+.note {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: var(--accent-soft); border: 1px solid rgba(53,224,161,.25);
+  border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px;
+}
+.note p { margin: 0; min-width: 0; }
+
+/* Cards */
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px; min-width: 0;
+}
+.card .label { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.card .value {
+  font-weight: 700; font-size: clamp(20px, 3.2vw, 28px); letter-spacing: -.02em;
+  line-height: 1.15; margin: 8px 0 2px; overflow-wrap: anywhere;
+}
+.card .value small { font-size: .5em; color: var(--muted); margin-left: 4px; }
+.card .sub { font-size: 12.5px; color: var(--muted); }
+.card.total { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.card.total .label, .card.total .sub, .card.total .value small { color: rgba(3,20,13,.7); }
+.card.owners-total { background: var(--owner); border-color: var(--owner); color: #1a0a2e; }
+.card.owners-total .label, .card.owners-total .sub { color: rgba(26,10,46,.7); }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot.month { background: var(--month); } .dot.year { background: var(--year); } .dot.once { background: var(--once); }
+
+/* Panel */
+.panel {
+  margin-top: 16px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 22px; padding: 16px;
+}
+.tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.search {
+  flex: 1 1 200px; min-width: 0; display: flex; align-items: center; gap: 10px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+  padding: 0 14px; min-height: 44px;
+}
+.search input {
+  flex: 1; min-width: 0; border: 0; background: transparent; padding: 11px 0;
+  outline: none; font-size: 16px;
+}
+.search input::placeholder { color: var(--muted); }
+.search:focus-within { border-color: var(--accent); }
+.search svg { flex: none; color: var(--muted); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  border: 1px solid var(--line); background: transparent; border-radius: 999px;
+  padding: 10px 14px; font-weight: 600; font-size: 13px;
+  display: inline-flex; gap: 6px; align-items: center; min-height: 40px;
+}
+.chip:active { transform: scale(0.97); }
+.chip i { font-style: normal; color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip[aria-pressed="true"] i { color: inherit; opacity: .65; }
+
+.head, .row {
+  display: grid; grid-template-columns: 2fr 1.7fr 1fr .9fr 1fr 130px; gap: 12px; align-items: center;
+}
+.head {
+  padding: 10px 6px; color: var(--muted); font-size: 11px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--line);
+}
+.row { padding: 14px 6px; border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.row > * { min-width: 0; }
+.who { display: flex; align-items: center; gap: 12px; }
+.av {
+  flex: none; width: 40px; height: 40px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; font-weight: 700; font-size: 16px;
+}
+.av.owner { background: var(--owner-soft); color: var(--owner); }
+.who strong, .who span.sub {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.who span.sub { color: var(--muted); font-size: 13px; }
+.contact span {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px;
+}
+.contact span + span { color: var(--muted); }
+.pill {
+  display: inline-block; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 700;
+}
+.pill.month { background: var(--month-soft); color: var(--month); }
+.pill.year { background: var(--year-soft); color: var(--year); }
+.pill.once { background: var(--once-soft); color: var(--once); }
+.pill.owner { background: var(--owner-soft); color: var(--owner); }
+.price { font-weight: 700; }
+.act { display: flex; justify-content: flex-end; gap: 4px; }
+.icon-btn {
+  width: 42px; height: 42px; border-radius: 50%; color: var(--muted);
+  display: grid; place-items: center;
+}
+.icon-btn:active { background: var(--panel-2); color: var(--fg); }
+.icon-btn.del:active { background: var(--danger-soft); color: var(--danger); }
+.confirm { display: flex; align-items: center; gap: 6px; }
+.empty { text-align: center; padding: 48px 16px; color: var(--muted); }
+.empty h3 { color: var(--fg); font-size: 18px; margin: 0 0 6px; }
+.empty p { margin: 0 0 18px; }
+
+/* Modal */
+.modal {
+  position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(2,4,9,.75);
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+.modal[hidden] { display: none !important; }
+.sheet {
+  width: 100%; max-width: 540px; max-height: min(92vh, 100%); overflow: auto;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 24px 24px 0 0; padding: 20px 20px calc(20px + var(--safe-bottom));
+  overscroll-behavior: contain;
+}
+@media (min-width: 560px) {
+  .modal { align-items: center; padding: 16px; }
+  .sheet { border-radius: 24px; padding: 24px; max-height: 90vh; }
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.sheet-head h2 { font-size: 20px; margin: 0; letter-spacing: -.02em; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+.field label, .field .lab { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.field input[type=text], .field input[type=email], .field input[type=tel], .field input[type=number],
+.field textarea {
+  width: 100%; border: 1.5px solid var(--line); background: var(--bg); border-radius: 12px;
+  padding: 12px 14px; outline: none; font-size: 16px; min-height: 48px;
+}
+.field textarea { min-height: 90px; resize: vertical; }
+.field input:focus, .field textarea:focus { border-color: var(--accent); }
+.field input[aria-invalid="true"], .field textarea[aria-invalid="true"] { border-color: var(--danger); }
+.err { color: var(--danger); font-size: 12.5px; margin: 5px 0 0; }
+.err:empty { display: none; }
+.price-in { position: relative; }
+.price-in em {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  font-style: normal; color: var(--muted); font-size: 13px; font-weight: 700; pointer-events: none;
+}
+.price-in input { padding-right: 56px !important; }
+.seg {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  background: var(--bg); border: 1px solid var(--line); padding: 4px; border-radius: 14px;
+}
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label {
+  margin: 0; text-align: center; padding: 12px 6px; border-radius: 10px; cursor: pointer;
+  font-weight: 700; font-size: 13.5px; color: var(--muted); min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+.seg input:checked + label { background: var(--accent); color: var(--accent-ink); }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + var(--safe-bottom)); transform: translateX(-50%);
+  z-index: 50; background: var(--fg); color: var(--bg); padding: 12px 20px; border-radius: 999px;
+  font-weight: 700; font-size: 14px; max-width: calc(100vw - 32px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+.toast[hidden] { display: none !important; }
+
+@media (max-width: 860px) { .cards { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 760px) {
+  .head { display: none; }
+  .row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "who act" "city city" "contact contact" "pill price";
+    gap: 8px 12px; padding: 16px 4px;
+  }
+  .row .who { grid-area: who; } .row .act { grid-area: act; }
+  .row .city { grid-area: city; color: var(--muted); font-size: 14px; }
+  .row .contact { grid-area: contact; } .row .planc { grid-area: pill; }
+  .row .price { grid-area: price; text-align: right; }
+  .row.owner-row {
+    grid-template-areas: "who act" "city city" "contact contact" "notes notes";
+  }
+  .row.owner-row .notes { grid-area: notes; color: var(--muted); font-size: 13px; }
+}
+@media (max-width: 560px) {
+  .brand { font-size: 12px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .cards { gap: 10px; }
+  .card { padding: 14px; border-radius: 16px; }
+}
+@media (display-mode: standalone) {
+  .top { padding-top: calc(8px + var(--safe-top)); }
+}
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><i></i>Restaurant &amp; Cafe Manager</div>
+    <button class="btn" id="open-add" type="button">+ Add</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Main tabs: Clients / Owners -->
+  <div class="main-tabs" role="tablist">
+    <button type="button" class="main-tab" role="tab" id="tab-clients" aria-selected="true" data-view="clients">
+      Clients <span class="count" id="count-clients">0</span>
+    </button>
+    <button type="button" class="main-tab" role="tab" id="tab-owners" aria-selected="false" data-view="owners">
+      Owners <span class="count" id="count-owners">0</span>
+    </button>
+  </div>
+
+  <!-- ===== CLIENTS VIEW ===== -->
+  <div id="view-clients">
+    <div class="note" id="note" hidden>
+      <p>These are example clients. Your data stays on this device only.</p>
+      <button class="btn ghost small" id="clear-examples" type="button">Remove examples</button>
+    </div>
+
+    <section class="cards" aria-label="Summary">
+      <div class="card total">
+        <div class="label">Total revenue</div>
+        <div class="value num" id="revenue">0<small>MAD</small></div>
+        <div class="sub num" id="s-clients">0 clients</div>
+      </div>
+      <div class="card" id="card-month"></div>
+      <div class="card" id="card-year"></div>
+      <div class="card" id="card-once"></div>
+    </section>
+
+    <section class="panel" aria-label="Clients">
+      <div class="tools">
+        <label class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="search" type="search" placeholder="Search restaurant, name or city" autocomplete="off" enterkeyhint="search">
+        </label>
+        <div class="chips" id="chips" role="group" aria-label="Filter by plan"></div>
+      </div>
+      <div class="head" aria-hidden="true">
+        <div>Client</div><div>Contact</div><div>City</div><div>Plan</div><div>Price</div><div></div>
+      </div>
+      <div id="rows"></div>
+    </section>
+  </div>
+
+  <!-- ===== OWNERS VIEW ===== -->
+  <div id="view-owners" hidden>
+    <section class="cards" aria-label="Owners summary">
+      <div class="card owners-total">
+        <div class="label">Total owners</div>
+        <div class="value num" id="owners-total">0</div>
+        <div class="sub">Potential clients</div>
+      </div>
+      <div class="card">
+        <div class="label">With phone</div>
+        <div class="value num" id="owners-phone">0</div>
+        <div class="sub">Ready to contact</div>
+      </div>
+      <div class="card">
+        <div class="label">With email</div>
+        <div class="value num" id="owners-email">0</div>
+        <div class="sub">Email available</div>
+      </div>
+      <div class="card">
+        <div class="label">Cities</div>
+        <div class="value num" id="owners-cities">0</div>
+        <div class="sub">Different cities</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Owners">
+      <div class="tools">
+        <label class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="search-owners" type="search" placeholder="Search owner name, city or phone" autocomplete="off" enterkeyhint="search">
+        </label>
+      </div>
+      <div class="head" aria-hidden="true">
+        <div>Owner</div><div>Contact</div><div>City</div><div></div><div></div><div></div>
+      </div>
+      <div id="rows-owners"></div>
+    </section>
+  </div>
+</main>
+
+<!-- CLIENT MODAL -->
+<div class="modal" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="sheet-head">
+      <h2 id="modal-title">Add a new client</h2>
+      <button class="icon-btn" id="close-modal" type="button" aria-label="Close">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <form id="client-form" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <label for="f-firstName">First name</label>
+          <input id="f-firstName" name="firstName" type="text" autocomplete="given-name" enterkeyhint="next">
+          <p class="err" id="e-firstName"></p>
+        </div>
+        <div class="field">
+          <label for="f-lastName">Last name</label>
+          <input id="f-lastName" name="lastName" type="text" autocomplete="family-name" enterkeyhint="next">
+          <p class="err" id="e-lastName"></p>
+        </div>
+        <div class="field full">
+          <label for="f-restaurant">Restaurant / cafe name</label>
+          <input id="f-restaurant" name="restaurant" type="text" autocomplete="organization" enterkeyhint="next">
+          <p class="err" id="e-restaurant"></p>
+        </div>
+        <div class="field">
+          <label for="f-email">Email</label>
+          <input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" enterkeyhint="next">
+          <p class="err" id="e-email"></p>
+        </div>
+        <div class="field">
+          <label for="f-phone">Phone number</label>
+          <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" enterkeyhint="next">
+          <p class="err" id="e-phone"></p>
+        </div>
+        <div class="field">
+          <label for="f-city">City</label>
+          <input id="f-city" name="city" type="text" autocomplete="address-level2" enterkeyhint="next">
+          <p class="err" id="e-city"></p>
+        </div>
+        <div class="field">
+          <label for="f-price">Price</label>
+          <div class="price-in">
+            <input id="f-price" name="price" type="number" min="0" step="any" inputmode="decimal" enterkeyhint="done">
+            <em>MAD</em>
+          </div>
+          <p class="err" id="e-price"></p>
+        </div>
+        <div class="field full">
+          <span class="lab" id="sub-lab">Subscription type</span>
+          <div class="seg" role="radiogroup" aria-labelledby="sub-lab">
+            <input type="radio" name="sub" id="sub-month" value="month" checked>
+            <label for="sub-month">Monthly</label>
+            <input type="radio" name="sub" id="sub-year" value="year">
+            <label for="sub-year">Yearly</label>
+            <input type="radio" name="sub" id="sub-once" value="one time">
+            <label for="sub-once">One time</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn ghost" type="button" id="cancel-add">Cancel</button>
+        <button class="btn" type="submit" id="save-btn">Save client</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- OWNER MODAL -->
+<div class="modal" id="modal-owner" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="modal-owner-title">
+    <div class="sheet-head">
+      <h2 id="modal-owner-title">Add owner</h2>
+      <button class="icon-btn" id="close-modal-owner" type="button" aria-label="Close">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <form id="owner-form" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <label for="o-firstName">First name</label>
+          <input id="o-firstName" name="firstName" type="text" autocomplete="given-name" enterkeyhint="next">
+          <p class="err" id="oe-firstName"></p>
+        </div>
+        <div class="field">
+          <label for="o-lastName">Last name</label>
+          <input id="o-lastName" name="lastName" type="text" autocomplete="family-name" enterkeyhint="next">
+          <p class="err" id="oe-lastName"></p>
+        </div>
+        <div class="field">
+          <label for="o-phone">Phone number</label>
+          <input id="o-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" enterkeyhint="next">
+          <p class="err" id="oe-phone"></p>
+        </div>
+        <div class="field">
+          <label for="o-email">restaurant</label>
+          <input id="o-email" name="email" type="email" inputmode="email" autocomplete="email" enterkeyhint="next">
+          <p class="err" id="oe-email"></p>
+        </div>
+        <div class="field">
+          <label for="o-city">City</label>
+          <input id="o-city" name="city" type="text" autocomplete="address-level2" enterkeyhint="next">
+          <p class="err" id="oe-city"></p>
+        </div>
+        <div class="field full">
+          <label for="o-notes">Notes (optional)</label>
+          <textarea id="o-notes" name="notes" placeholder="Restaurant name, interest level, follow-up date..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn ghost" type="button" id="cancel-owner">Cancel</button>
+        <button class="btn owner" type="submit" id="save-owner-btn">Save owner</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+  var CLIENT_KEY = 'rcm-clients-v1';
+  var OWNER_KEY = 'rcm-owners-v1';
+  var SUBS = [
+    { key: 'month', label: 'Monthly', cls: 'month', card: 'card-month' },
+    { key: 'year', label: 'Yearly', cls: 'year', card: 'card-year' },
+    { key: 'one time', label: 'One time', cls: 'once', card: 'card-once' }
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function money(n) { return Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
+  function subInfo(key) { return SUBS.filter(function (s) { return s.key === key; })[0] || SUBS[2]; }
+  function uid() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  function seedClients() {
+    var d = [
+      ['Salma', 'Idrissi', 'Café Atlas', 'salma@cafeatlas.example', '0612 34 56 78', 'Rabat', 1200, 'month'],
+      ['Youssef', 'Bennani', 'Riad Saveurs', 'youssef@riadsaveurs.example', '0661 22 90 41', 'Marrakech', 9800, 'year'],
+      ['Nadia', 'El Fassi', 'Le Petit Zellige', 'nadia@petitzellige.example', '0623 77 18 05', 'Casablanca', 2400, 'month'],
+      ['Omar', 'Tazi', 'Grill du Port', 'omar@grillduport.example', '0650 09 33 62', 'Tangier', 4500, 'one time'],
+      ['Hind', 'Alaoui', 'Bakery Corner', 'hind@bakerycorner.example', '0634 51 27 90', 'Fes', 8200, 'year']
+    ];
+    return d.map(function (r, i) {
+      return { id: 'ex' + i, example: true, firstName: r[0], lastName: r[1], restaurant: r[2], email: r[3], phone: r[4], city: r[5], price: r[6], sub: r[7] };
+    });
+  }
+
+  function load(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      if (raw) { var a = JSON.parse(raw); if (Array.isArray(a)) return a; }
+    } catch (e) {}
+    return fallback || [];
+  }
+  function save(key, data) {
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+  }
+
+  var clients = load(CLIENT_KEY, seedClients());
+  var owners = load(OWNER_KEY, []);
+  var view = 'clients';
+  var filter = 'all', query = '', queryOwners = '';
+  var confirmId = null, confirmOwnerId = null;
+  var editId = null, editOwnerId = null;
+  var toastTimer = null, lastFocus = null;
+
+  /* ---------- VIEW SWITCH ---------- */
+  function setView(v) {
+    view = v;
+    $('view-clients').hidden = v !== 'clients';
+    $('view-owners').hidden = v !== 'owners';
+    $('tab-clients').setAttribute('aria-selected', v === 'clients');
+    $('tab-owners').setAttribute('aria-selected', v === 'owners');
+    $('open-add').textContent = v === 'clients' ? '+ Add client' : '+ Add owner';
+    $('open-add').className = v === 'clients' ? 'btn' : 'btn owner';
+    confirmId = null; confirmOwnerId = null;
+    renderAll();
+  }
+
+  document.querySelector('.main-tabs').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-view]');
+    if (t) setView(t.getAttribute('data-view'));
+  });
+
+  /* ---------- CLIENTS ---------- */
+  function renderSummary() {
+    var total = 0, n = clients.length, by = {};
+    SUBS.forEach(function (s) { by[s.key] = { count: 0, rev: 0 }; });
+    clients.forEach(function (c) {
+      var p = Number(c.price) || 0; total += p;
+      var b = by[c.sub] || by['one time']; b.count++; b.rev += p;
+    });
+    $('revenue').innerHTML = money(total) + '<small>MAD</small>';
+    $('s-clients').textContent = n + (n === 1 ? ' client' : ' clients');
+    $('count-clients').textContent = n;
+    SUBS.forEach(function (s) {
+      var b = by[s.key];
+      $(s.card).innerHTML = '<div class="label"><i class="dot ' + s.cls + '"></i>' + s.label + '</div><div class="value num">' + b.count + '</div><div class="sub num">' + money(b.rev) + ' MAD</div>';
+    });
+    $('note').hidden = !clients.some(function (c) { return c.example; });
+  }
+
+  function renderChips() {
+    var items = [{ key: 'all', label: 'All', count: clients.length }].concat(
+      SUBS.map(function (s) {
+        return { key: s.key, label: s.label, count: clients.filter(function (c) { return c.sub === s.key; }).length };
+      })
+    );
+    $('chips').innerHTML = items.map(function (it) {
+      return '<button type="button" class="chip" data-filter="' + esc(it.key) + '" aria-pressed="' + (filter === it.key) + '">' + it.label + ' <i class="num">' + it.count + '</i></button>';
+    }).join('');
+  }
+
+  function matchesClient(c) {
+    if (filter !== 'all' && c.sub !== filter) return false;
+    if (!query) return true;
+    var hay = [c.restaurant, c.firstName + ' ' + c.lastName, c.city, c.email].join(' ').toLowerCase();
+    return hay.indexOf(query.toLowerCase()) !== -1;
+  }
+
+  function renderClientRows() {
+    var list = clients.filter(matchesClient);
+    var el = $('rows');
+    if (!clients.length) {
+      el.innerHTML = '<div class="empty"><h3>No clients yet</h3><p>Add your first restaurant or cafe to start tracking revenue.</p><button class="btn" type="button" data-open-add>Add a client</button></div>';
+      return;
+    }
+    if (!list.length) {
+      el.innerHTML = '<div class="empty"><h3>' + (query ? 'No match for “' + esc(query) + '”' : 'No clients on this plan yet') + '</h3><p>Try another search or switch the plan filter.</p></div>';
+      return;
+    }
+    el.innerHTML = list.map(function (c) {
+      var s = subInfo(c.sub);
+      var actions;
+      if (confirmId === c.id) {
+        actions = '<div class="confirm"><button class="btn ghost small" type="button" data-cancel>Cancel</button><button class="btn danger small" type="button" data-confirm="' + esc(c.id) + '">Delete</button></div>';
+      } else {
+        actions =
+          '<button class="icon-btn" type="button" data-edit="' + esc(c.id) + '" aria-label="Edit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>' +
+          '<button class="icon-btn del" type="button" data-del="' + esc(c.id) + '" aria-label="Delete"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>';
+      }
+      return '<article class="row">' +
+        '<div class="who"><span class="av">' + esc((c.restaurant || '?').charAt(0).toUpperCase()) + '</span><div style="min-width:0"><strong>' + esc(c.restaurant) + '</strong><span class="sub">' + esc(c.firstName + ' ' + c.lastName) + '</span></div></div>' +
+        '<div class="contact"><span>' + esc(c.email || 'No email') + '</span><span class="num">' + esc(c.phone || 'No phone') + '</span></div>' +
+        '<div class="city">' + esc(c.city || '') + '</div>' +
+        '<div class="planc"><span class="pill ' + s.cls + '">' + s.label + '</span></div>' +
+        '<div class="price num">' + money(c.price) + ' MAD</div>' +
+        '<div class="act">' + actions + '</div></article>';
+    }).join('');
+  }
+
+  /* ---------- OWNERS ---------- */
+  function renderOwnersSummary() {
+    var n = owners.length;
+    $('owners-total').textContent = n;
+    $('count-owners').textContent = n;
+    $('owners-phone').textContent = owners.filter(function (o) { return o.phone; }).length;
+    $('owners-email').textContent = owners.filter(function (o) { return o.email; }).length;
+    var cities = {};
+    owners.forEach(function (o) { if (o.city) cities[o.city.toLowerCase()] = 1; });
+    $('owners-cities').textContent = Object.keys(cities).length;
+  }
+
+  function matchesOwner(o) {
+    if (!queryOwners) return true;
+    var hay = [o.firstName + ' ' + o.lastName, o.city, o.phone, o.email, o.notes].join(' ').toLowerCase();
+    return hay.indexOf(queryOwners.toLowerCase()) !== -1;
+  }
+
+  function renderOwnerRows() {
+    var list = owners.filter(matchesOwner);
+    var el = $('rows-owners');
+    if (!owners.length) {
+      el.innerHTML = '<div class="empty"><h3>No owners yet</h3><p>Save potential restaurant owners here. You can convert them to clients later.</p><button class="btn owner" type="button" data-open-add-owner>Add an owner</button></div>';
+      return;
+    }
+    if (!list.length) {
+      el.innerHTML = '<div class="empty"><h3>No match for “' + esc(queryOwners) + '”</h3><p>Try another search.</p></div>';
+      return;
+    }
+    el.innerHTML = list.map(function (o) {
+      var actions;
+      if (confirmOwnerId === o.id) {
+        actions = '<div class="confirm"><button class="btn ghost small" type="button" data-cancel-owner>Cancel</button><button class="btn danger small" type="button" data-confirm-owner="' + esc(o.id) + '">Delete</button></div>';
+      } else {
+        actions =
+          '<button class="icon-btn" type="button" data-to-client="' + esc(o.id) + '" aria-label="Convert to client" title="Convert to client"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></button>' +
+          '<button class="icon-btn" type="button" data-edit-owner="' + esc(o.id) + '" aria-label="Edit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>' +
+          '<button class="icon-btn del" type="button" data-del-owner="' + esc(o.id) + '" aria-label="Delete"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>';
+      }
+      return '<article class="row owner-row">' +
+        '<div class="who"><span class="av owner">' + esc(((o.firstName || '?')[0] || '?').toUpperCase()) + '</span><div style="min-width:0"><strong>' + esc(o.firstName + ' ' + o.lastName) + '</strong><span class="sub">' + (o.notes ? esc(o.notes.slice(0, 40)) + (o.notes.length > 40 ? '…' : '') : 'No notes') + '</span></div></div>' +
+        '<div class="contact"><span>' + esc(o.email || 'No email') + '</span><span class="num">' + esc(o.phone || 'No phone') + '</span></div>' +
+        '<div class="city">' + esc(o.city || '') + '</div>' +
+        '<div class="planc"><span class="pill owner">Owner</span></div>' +
+        '<div class="price"></div>' +
+        '<div class="act">' + actions + '</div></article>';
+    }).join('');
+  }
+
+  function renderAll() {
+    renderSummary();
+    renderChips();
+    renderClientRows();
+    renderOwnersSummary();
+    renderOwnerRows();
+  }
+
+  /* ---------- EVENTS: Clients ---------- */
+  $('chips').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-filter]');
+    if (!b) return;
+    filter = b.getAttribute('data-filter'); confirmId = null;
+    renderChips(); renderClientRows();
+  });
+  $('search').addEventListener('input', function (e) {
+    query = e.target.value.trim(); confirmId = null; renderClientRows();
+  });
+  $('rows').addEventListener('click', function (e) {
+    var del = e.target.closest('[data-del]');
+    if (del) { confirmId = del.getAttribute('data-del'); renderClientRows(); return; }
+    if (e.target.closest('[data-cancel]')) { confirmId = null; renderClientRows(); return; }
+    var ok = e.target.closest('[data-confirm]');
+    if (ok) {
+      var id = ok.getAttribute('data-confirm');
+      var gone = clients.filter(function (c) { return c.id === id; })[0];
+      clients = clients.filter(function (c) { return c.id !== id; });
+      confirmId = null; save(CLIENT_KEY, clients); renderAll();
+      toast((gone ? gone.restaurant : 'Client') + ' deleted'); return;
+    }
+    var ed = e.target.closest('[data-edit]');
+    if (ed) openClientModal(ed.getAttribute('data-edit'));
+  });
+  $('clear-examples').addEventListener('click', function () {
+    clients = clients.filter(function (c) { return !c.example; });
+    save(CLIENT_KEY, clients); renderAll(); toast('Examples removed');
+  });
+
+  /* ---------- EVENTS: Owners ---------- */
+  $('search-owners').addEventListener('input', function (e) {
+    queryOwners = e.target.value.trim(); confirmOwnerId = null; renderOwnerRows();
+  });
+  $('rows-owners').addEventListener('click', function (e) {
+    var del = e.target.closest('[data-del-owner]');
+    if (del) { confirmOwnerId = del.getAttribute('data-del-owner'); renderOwnerRows(); return; }
+    if (e.target.closest('[data-cancel-owner]')) { confirmOwnerId = null; renderOwnerRows(); return; }
+    var ok = e.target.closest('[data-confirm-owner]');
+    if (ok) {
+      var id = ok.getAttribute('data-confirm-owner');
+      var gone = owners.filter(function (o) { return o.id === id; })[0];
+      owners = owners.filter(function (o) { return o.id !== id; });
+      confirmOwnerId = null; save(OWNER_KEY, owners); renderAll();
+      toast((gone ? gone.firstName + ' ' + gone.lastName : 'Owner') + ' deleted'); return;
+    }
+    var ed = e.target.closest('[data-edit-owner]');
+    if (ed) openOwnerModal(ed.getAttribute('data-edit-owner'));
+    var toClient = e.target.closest('[data-to-client]');
+    if (toClient) {
+      var oid = toClient.getAttribute('data-to-client');
+      var o = owners.filter(function (x) { return x.id === oid; })[0];
+      if (o) {
+        setView('clients');
+        openClientModal(null, o); // prefill from owner
+      }
+    }
+  });
+
+  /* ---------- OPEN ADD BUTTON ---------- */
+  $('open-add').addEventListener('click', function () {
+    if (view === 'clients') openClientModal();
+    else openOwnerModal();
+  });
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-open-add]')) openClientModal();
+    if (e.target.closest('[data-open-add-owner]')) openOwnerModal();
+  });
+
+  /* ---------- CLIENT MODAL ---------- */
+  var CFIELDS = ['firstName', 'lastName', 'restaurant', 'email', 'phone', 'city', 'price'];
+
+  function openClientModal(id, prefillOwner) {
+    lastFocus = document.activeElement;
+    editId = id || null;
+    $('client-form').reset();
+    CFIELDS.forEach(function (f) { clearErr('e-', f); });
+    $('sub-month').checked = true;
+
+    if (editId) {
+      var c = clients.filter(function (x) { return x.id === editId; })[0];
+      if (c) {
+        $('f-firstName').value = c.firstName || '';
+        $('f-lastName').value = c.lastName || '';
+        $('f-restaurant').value = c.restaurant || '';
+        $('f-email').value = c.email || '';
+        $('f-phone').value = c.phone || '';
+        $('f-city').value = c.city || '';
+        $('f-price').value = c.price != null ? c.price : '';
+        var radio = document.querySelector('input[name="sub"][value="' + (c.sub || 'month') + '"]');
+        if (radio) radio.checked = true;
+        $('modal-title').textContent = 'Edit client';
+        $('save-btn').textContent = 'Save changes';
+      }
+    } else if (prefillOwner) {
+      $('f-firstName').value = prefillOwner.firstName || '';
+      $('f-lastName').value = prefillOwner.lastName || '';
+      $('f-email').value = prefillOwner.email || '';
+      $('f-phone').value = prefillOwner.phone || '';
+      $('f-city').value = prefillOwner.city || '';
+      // restaurant left empty so user fills it
+      $('modal-title').textContent = 'Convert owner to client';
+      $('save-btn').textContent = 'Save as client';
+    } else {
+      $('modal-title').textContent = 'Add a new client';
+      $('save-btn').textContent = 'Save client';
+    }
+
+    $('modal').hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('f-firstName').focus(); }, 40);
+  }
+
+  function closeClientModal() {
+    $('modal').hidden = true;
+    document.body.style.overflow = '';
+    editId = null;
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  function clearErr(prefix, f) {
+    var el = $(prefix + f);
+    if (el) el.textContent = '';
+    var inp = $('f-' + f) || $('o-' + f);
+    if (inp) inp.removeAttribute('aria-invalid');
+  }
+  function setErr(prefix, f, msg) {
+    var el = $(prefix + f);
+    if (el) el.textContent = msg;
+    var inp = $('f-' + f) || $('o-' + f);
+    if (inp) inp.setAttribute('aria-invalid', 'true');
+  }
+
+  $('close-modal').addEventListener('click', closeClientModal);
+  $('cancel-add').addEventListener('click', closeClientModal);
+  $('modal').addEventListener('mousedown', function (e) { if (e.target === $('modal')) closeClientModal(); });
+
+  $('client-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = {};
+    CFIELDS.forEach(function (f) { v[f] = $('f-' + f).value.trim(); clearErr('e-', f); });
+    var sub = document.querySelector('input[name="sub"]:checked').value;
+    var bad = null;
+    function fail(f, m) { setErr('e-', f, m); if (!bad) bad = f; }
+    if (!v.firstName) fail('firstName', 'Enter a first name.');
+    if (!v.lastName) fail('lastName', 'Enter a last name.');
+    if (!v.restaurant) fail('restaurant', 'Enter the restaurant or cafe name.');
+    if (v.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) fail('email', 'Enter a valid email.');
+    if (v.phone && !/^[+()\d\s.-]{6,}$/.test(v.phone)) fail('phone', 'Use digits, e.g. 0612 34 56 78.');
+    if (!v.city) fail('city', 'Enter the city.');
+    var price = Number(v.price);
+    if (v.price === '' || isNaN(price) || price < 0) fail('price', 'Enter a price of 0 or more.');
+    if (bad) { $('f-' + bad).focus(); return; }
+
+    if (editId) {
+      var idx = -1;
+      for (var i = 0; i < clients.length; i++) if (clients[i].id === editId) { idx = i; break; }
+      if (idx >= 0) {
+        clients[idx] = {
+          id: clients[idx].id, example: clients[idx].example,
+          firstName: v.firstName, lastName: v.lastName, restaurant: v.restaurant,
+          email: v.email, phone: v.phone, city: v.city, price: price, sub: sub
+        };
+        toast(v.restaurant + ' updated');
+      }
+    } else {
+      clients.unshift({
+        id: uid(), firstName: v.firstName, lastName: v.lastName, restaurant: v.restaurant,
+        email: v.email, phone: v.phone, city: v.city, price: price, sub: sub
+      });
+      toast(v.restaurant + ' added');
+    }
+    filter = 'all'; query = ''; $('search').value = ''; confirmId = null;
+    save(CLIENT_KEY, clients); closeClientModal(); renderAll();
+  });
+
+  /* ---------- OWNER MODAL ---------- */
+  var OFIELDS = ['firstName', 'lastName', 'phone', 'email', 'city'];
+
+  function openOwnerModal(id) {
+    lastFocus = document.activeElement;
+    editOwnerId = id || null;
+    $('owner-form').reset();
+    OFIELDS.forEach(function (f) { clearErr('oe-', f); });
+
+    if (editOwnerId) {
+      var o = owners.filter(function (x) { return x.id === editOwnerId; })[0];
+      if (o) {
+        $('o-firstName').value = o.firstName || '';
+        $('o-lastName').value = o.lastName || '';
+        $('o-phone').value = o.phone || '';
+        $('o-email').value = o.email || '';
+        $('o-city').value = o.city || '';
+        $('o-notes').value = o.notes || '';
+        $('modal-owner-title').textContent = 'Edit owner';
+        $('save-owner-btn').textContent = 'Save changes';
+      }
+    } else {
+      $('modal-owner-title').textContent = 'Add owner';
+      $('save-owner-btn').textContent = 'Save owner';
+    }
+
+    $('modal-owner').hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('o-firstName').focus(); }, 40);
+  }
+
+  function closeOwnerModal() {
+    $('modal-owner').hidden = true;
+    document.body.style.overflow = '';
+    editOwnerId = null;
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  $('close-modal-owner').addEventListener('click', closeOwnerModal);
+  $('cancel-owner').addEventListener('click', closeOwnerModal);
+  $('modal-owner').addEventListener('mousedown', function (e) { if (e.target === $('modal-owner')) closeOwnerModal(); });
+
+  $('owner-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = {
+      firstName: $('o-firstName').value.trim(),
+      lastName: $('o-lastName').value.trim(),
+      phone: $('o-phone').value.trim(),
+      email: $('o-email').value.trim(),
+      city: $('o-city').value.trim(),
+      notes: $('o-notes').value.trim()
+    };
+    OFIELDS.forEach(function (f) { clearErr('oe-', f); });
+    var bad = null;
+    function fail(f, m) { setErr('oe-', f, m); if (!bad) bad = f; }
+    if (!v.firstName) fail('firstName', 'Enter a first name.');
+    if (!v.lastName) fail('lastName', 'Enter a last name.');
+    if (v.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) fail('email', 'Enter a valid email.');
+    if (v.phone && !/^[+()\d\s.-]{6,}$/.test(v.phone)) fail('phone', 'Use digits, e.g. 0612 34 56 78.');
+    if (bad) { $('o-' + bad).focus(); return; }
+
+    if (editOwnerId) {
+      var idx = -1;
+      for (var i = 0; i < owners.length; i++) if (owners[i].id === editOwnerId) { idx = i; break; }
+      if (idx >= 0) {
+        owners[idx] = { id: owners[idx].id, firstName: v.firstName, lastName: v.lastName, phone: v.phone, email: v.email, city: v.city, notes: v.notes };
+        toast(v.firstName + ' ' + v.lastName + ' updated');
+      }
+    } else {
+      owners.unshift({ id: uid(), firstName: v.firstName, lastName: v.lastName, phone: v.phone, email: v.email, city: v.city, notes: v.notes });
+      toast(v.firstName + ' ' + v.lastName + ' added');
+    }
+    queryOwners = ''; $('search-owners').value = ''; confirmOwnerId = null;
+    save(OWNER_KEY, owners); closeOwnerModal(); renderAll();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (!$('modal').hidden) closeClientModal();
+      if (!$('modal-owner').hidden) closeOwnerModal();
+    }
+  });
+
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
+  }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
